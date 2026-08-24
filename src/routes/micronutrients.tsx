@@ -19,7 +19,7 @@ export const Route = createFileRoute("/micronutrients")({
       },
     ],
   }),
-  component: Micronutrients;
+  component: Micronutrients,
 });
 
 function Micronutrients() {
