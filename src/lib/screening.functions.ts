@@ -13,7 +13,12 @@ export const analyzeImage = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => AnalyzeInput.parse(input))
   .handler(async ({ data }) => {
     const { runInference } = await import("./screening.server");
-    return runInference(data);
+    try {
+      return await runInference(data);
+    } catch (err) {
+      console.error("[nutrilens] inference failed", err);
+      throw err;
+    }
   });
 
 const DietInput = z.object({

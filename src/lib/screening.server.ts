@@ -1,4 +1,4 @@
-import { generateText, Output } from "ai";
+import { generateText } from "ai";
 import { z } from "zod";
 import { createLovableAiGatewayProvider } from "./ai-gateway.server";
 import { NUTRIENTS } from "./nutrients";
@@ -59,13 +59,15 @@ export async function runInference(input: {
 
   const result = await generateText({
     model: gateway("google/gemini-3.7-flash"),
-    output: Output.object({ schema: ScreeningSchema }),
     system: [
       "You are the inference component of NutriLens, an educational nutritional screening tool.",
       "You never diagnose. You describe visible characteristics and produce a ranked likelihood distribution over micronutrient categories.",
       `Allowed categories: ${NUTRIENT_NAMES.join(", ")}, Other.`,
       "If the image is unclear, not the stated body area, or shows nothing suggestive, keep probabilities flat and put most weight on 'Other'.",
       "Use cautious, non-diagnostic language.",
+      "Reply with JSON only (no markdown fences) matching:",
+      '{"image_quality":string,"visual_observations":string[],"explanation":string,"attention_regions":[{"label":string,"x":number,"y":number,"w":number,"h":number}],"probabilities":[{"nutrient":string,"probability":number}]}',
+      "Region coordinates are fractions of image width/height between 0 and 1. Probabilities are 0-1 and sum to 1, highest first.",
     ].join(" "),
     messages: [
       {
@@ -75,13 +77,17 @@ export async function runInference(input: {
             type: "text",
             text: `Body area stated by the user: ${input.bodyArea}. Screen this image and return the structured result.`,
           },
-          { type: "image", image: input.imageDataUrl },
+          {
+            type: "file",
+            data: input.imageDataUrl,
+            mediaType: input.imageDataUrl.slice(5, input.imageDataUrl.indexOf(";")),
+          },
         ],
       },
     ],
   });
 
-  const out = await result.output;
+  const out = ScreeningSchema.parse(parseJson(result.text));
   const cleaned = out.probabilities
     .filter((p) => Number.isFinite(p.probability) && p.probability > 0)
     .sort((a, b) => b.probability - a.probability)
@@ -93,6 +99,13 @@ export async function runInference(input: {
     probabilities: cleaned.map((p) => ({ ...p, probability: p.probability / total })),
     mode: INFERENCE_MODE,
   };
+}
+
+function parseJson(text: string): unknown {
+  const cleaned = text.trim().replace(/^```(?:json)?/i, "").replace(/```$/, "");
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+  return JSON.parse(start >= 0 ? cleaned.slice(start, end + 1) : cleaned);
 }
 
 const DietSchema = z.object({
@@ -126,11 +139,15 @@ export async function runDietPlan(input: {
   const gateway = createLovableAiGatewayProvider(key);
   const result = await generateText({
     model: gateway("google/gemini-3.7-flash"),
-    output: Output.object({ schema: DietSchema }),
-    system:
-      "You are a nutrition guidance generator. Produce practical, culturally appropriate daily meal suggestions rich in the target nutrient. Respect allergies and restrictions strictly. Never promise medical outcomes and never state exact micronutrient quantities as facts.",
+    system: [
+      "You are a nutrition guidance generator. Produce practical, culturally appropriate daily meal suggestions rich in the target nutrient.",
+      "Respect allergies and restrictions strictly. Never promise medical outcomes and never state exact micronutrient quantities as facts.",
+      "Reply with JSON only (no markdown fences) matching:",
+      '{"meals":[{"slot":string,"dish":string,"why":string}],"hydration":string,"tips":string[]}',
+      "Slots must be chosen from: Breakfast, Mid-Morning, Lunch, Evening Snack, Dinner.",
+    ].join(" "),
     prompt: JSON.stringify(input),
   });
 
-  return result.output;
+  return DietSchema.parse(parseJson(result.text));
 }

@@ -14,6 +14,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as MicronutrientsRouteImport } from './routes/micronutrients'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as ScreeningRouteImport } from './routes/screening'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -40,6 +41,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
   path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ScreeningRoute = ScreeningRouteImport.update({
+  id: '/screening',
+  path: '/screening',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -47,6 +53,7 @@ export interface FileRoutesByFullPath {
   '/how-it-works': typeof HowItWorksRoute
   '/micronutrients': typeof MicronutrientsRoute
   '/privacy': typeof PrivacyRoute
+  '/screening': typeof ScreeningRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +61,7 @@ export interface FileRoutesByTo {
   '/how-it-works': typeof HowItWorksRoute
   '/micronutrients': typeof MicronutrientsRoute
   '/privacy': typeof PrivacyRoute
+  '/screening': typeof ScreeningRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,12 +70,25 @@ export interface FileRoutesById {
   '/how-it-works': typeof HowItWorksRoute
   '/micronutrients': typeof MicronutrientsRoute
   '/privacy': typeof PrivacyRoute
+  '/screening': typeof ScreeningRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/how-it-works' | '/micronutrients' | '/privacy'
+  fullPaths:
+    | '/'
+    | '/about'
+    | '/how-it-works'
+    | '/micronutrients'
+    | '/privacy'
+    | '/screening'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/how-it-works' | '/micronutrients' | '/privacy'
+  to:
+    | '/'
+    | '/about'
+    | '/how-it-works'
+    | '/micronutrients'
+    | '/privacy'
+    | '/screening'
   id:
     | '__root__'
     | '/'
@@ -75,6 +96,7 @@ export interface FileRouteTypes {
     | '/how-it-works'
     | '/micronutrients'
     | '/privacy'
+    | '/screening'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -83,6 +105,7 @@ export interface RootRouteChildren {
   HowItWorksRoute: typeof HowItWorksRoute
   MicronutrientsRoute: typeof MicronutrientsRoute
   PrivacyRoute: typeof PrivacyRoute
+  ScreeningRoute: typeof ScreeningRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -122,6 +145,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/screening': {
+      id: '/screening'
+      path: '/screening'
+      fullPath: '/screening'
+      preLoaderRoute: typeof ScreeningRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -131,6 +161,7 @@ const rootRouteChildren: RootRouteChildren = {
   HowItWorksRoute: HowItWorksRoute,
   MicronutrientsRoute: MicronutrientsRoute,
   PrivacyRoute: PrivacyRoute,
+  ScreeningRoute: ScreeningRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
